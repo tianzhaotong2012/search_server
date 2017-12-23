@@ -195,8 +195,11 @@ int main(){
 	int hello_len = 0;
 
 	char QueryWord[100];
+	memset(QueryWord,0,100);
 	char QueryNumber[100];
+	memset(QueryNumber,0,100);
 	char QueryPage[100];
+	memset(QueryPage,0,100);
 	char JsonStr[4096];
 	
 	pthread_t pid;
@@ -272,45 +275,81 @@ int main(){
 		num_headers = sizeof(headers) / sizeof(headers[0]);
 		pret = phr_parse_request(recv_buf, buflen, &method, &method_len, &path, &path_len,
                              &minor_version, headers, &num_headers, prevbuflen);
-		
-		
-		char seg[] = "&";
-		char str[4096];
-		memcpy(str, path+2, (int)path_len-2);
-		char querylist[50][50]={""};
-		int j =0;
-		char *substr= strtok(str, seg);
-		while (substr != NULL) {    
-                	strcpy(querylist[j],substr);
-                	j++;  
-                	
-			char *ptr;
-			char k = '=';
-			ptr=strchr(substr,k);
-			char get_key[100];
-			memset(get_key,0,sizeof(get_key));
-			memcpy(get_key,substr,ptr-substr);
-			char get_value[100];
-			memset(get_value,0,100);
-			strcpy(get_value,ptr+1);
-			char handle_key[100] = {'q','u','e','r','y','_','w','o','r','d'};
-			if(strcmp(get_key,handle_key)==0){
-				memset(QueryWord,0,100);
-				strcpy(QueryWord,get_value);
-			}
-			char handle_key1[100] = {'q','u','e','r','y','_','n','u','m','b','e','r'};
-			if(strcmp(get_key,handle_key1)==0){
-				memset(QueryNumber,0,100);
-				strcpy(QueryNumber,get_value);
-			}
-			char handle_key2[100] = {'q','u','e','r','y','_','p','a','g','e'};
-			if(strcmp(get_key,handle_key2)==0){
-				memset(QueryPage,0,100);
-				strcpy(QueryPage,get_value);
-			}
-                	substr = strtok(NULL,seg);
-		}
 
+
+		int checkFlag = 1;
+		char seg[] = "&";
+		char *p;
+		if((p=strchr(path,'&'))==NULL){
+			checkFlag = -9;			
+		}
+		if((int)path_len <3){
+			checkFlag = -8;
+		}
+		if(checkFlag > 0){
+			char str[(int)path_len];
+			memcpy(str, path+2, (int)path_len-2);
+			char *substr= strtok(str, seg);
+			while (substr != NULL) { 
+                	
+				char *ptr;
+				char k = '=';
+				ptr=strchr(substr,k);
+				if(!ptr){
+					continue;
+				}
+				char get_key[100];
+				memset(get_key,0,sizeof(get_key));
+				memcpy(get_key,substr,ptr-substr);
+				char get_value[100];
+				memset(get_value,0,100);
+				//strcpy(get_value,ptr+1);
+				int result = snprintf(get_value, sizeof(get_value), "%s", ptr+1); 
+				if(result==sizeof(get_value) || result<0){
+					get_value[sizeof(get_value)-1] = 0;
+				}
+				char handle_key[100] = {'q','u','e','r','y','_','w','o','r','d'};
+				if(strcmp(get_key,handle_key)==0){
+					memset(QueryWord,0,100);
+					//strcpy(QueryWord,get_value);
+					int result = snprintf(QueryWord, sizeof(QueryWord), "%s", get_value); 
+					if(result==sizeof(QueryWord) || result<0){
+						QueryWord[sizeof(QueryWord)-1] = 0;
+					}
+				}
+				char handle_key1[100] = {'q','u','e','r','y','_','n','u','m','b','e','r'};
+				if(strcmp(get_key,handle_key1)==0){
+					memset(QueryNumber,0,100);
+					//strcpy(QueryNumber,get_value);
+					int result = snprintf(QueryNumber, sizeof(QueryNumber), "%s", get_value); 
+					if(result==sizeof(QueryNumber) || result<0){
+						QueryNumber[sizeof(QueryNumber)-1] = 0;
+					}
+				}
+				char handle_key2[100] = {'q','u','e','r','y','_','p','a','g','e'};
+				if(strcmp(get_key,handle_key2)==0){
+					memset(QueryPage,0,100);
+					//strcpy(QueryPage,get_value);
+					int result = snprintf(QueryPage, sizeof(QueryPage), "%s", get_value); 
+					if(result==sizeof(QueryPage) || result<0){
+						QueryPage[sizeof(QueryPage)-1] = 0;
+					}
+				}
+                		substr = strtok(NULL,seg);
+			}
+		}
+		//检查参数
+		if(atoi(QueryNumber) < 1 || atoi(QueryNumber) > 100){
+			if(checkFlag > 0){
+				checkFlag = -1;
+			}			
+		}
+		if(atoi(QueryPage) < 1 || atoi(QueryPage) > 100){
+			if(checkFlag > 0){
+				checkFlag = -2;
+			}
+		}
+		printf("ACCESS LOG: flag[%d] QueryWord[%s] QueryPage[%s] QueryNumber[%s]\n",checkFlag,QueryWord,QueryPage,QueryNumber);
 		//遍历结构体数组搜索开始
 		while(1){
 			if(search_data_lock == 0){
@@ -318,10 +357,15 @@ int main(){
 			}
 			usleep(100);
 		}
-		char * retStr;
-		retStr= search_from_data(sia,siaCount,QueryWord,QueryNumber,QueryPage);
-		strcpy(JsonStr,retStr);
-		free(retStr);
+		
+		if(checkFlag > 0){
+			char * retStr;
+			retStr= search_from_data(sia,siaCount,QueryWord,QueryNumber,QueryPage);
+			strcpy(JsonStr,retStr);
+			free(retStr);
+		}else{
+			snprintf(JsonStr, sizeof(JsonStr), "%s", "check param failed"); 
+		}		
 		//遍历结构体数组搜索模式结束
 
 		sprintf(buf , "HTTP/1.0 200 OK\r\n");
@@ -332,6 +376,11 @@ int main(){
 		send(client_fd, buf, strlen(buf), 0);
 		sprintf(buf,JsonStr);
 		send(client_fd, buf, strlen(buf),0);
+
+		//clean
+		memset(QueryWord,0,100);
+		memset(QueryNumber,0,100);
+		memset(QueryPage,0,100);
 
 		close(client_fd);
 	}
