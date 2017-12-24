@@ -296,6 +296,7 @@ int main(){
 				char k = '=';
 				ptr=strchr(substr,k);
 				if(!ptr){
+					substr = strtok(NULL,seg);
 					continue;
 				}
 				char get_key[100];
