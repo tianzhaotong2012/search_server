@@ -277,7 +277,8 @@ int main(){
 		int checkFlag = 1;
 		char seg[] = "&";
 		char *p;
-		if((p=strchr(path,'&'))==NULL){
+		p = strchr(path,'&');
+		if( !p || !*p){
 			checkFlag = -9;			
 		}
 		if((int)path_len <3){
