@@ -1,6 +1,6 @@
 # 指令编译器和选项  
 CC=gcc  
-CFLAGS=-Wall -std=gnu99
+CFLAGS=-Wall -std=gnu99 -g
 
 # 静态链接库  
 LDFLAGS =   

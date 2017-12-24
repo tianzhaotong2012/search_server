@@ -168,3 +168,15 @@ $endTs = microtime();
 printf("cost time:" . ($endTs-$startTs)*1000 . "ms" . PHP_EOL);
 
 print_r($dataRaw);
+
+//TEST 14
+$startTs = microtime();
+
+$dataRaw = file_get_contents("http://127.0.0.1:9003/favicon.ico");
+
+$endTs = microtime();
+
+printf("cost time:" . ($endTs-$startTs)*1000 . "ms" . PHP_EOL);
+
+print_r($dataRaw);
+
