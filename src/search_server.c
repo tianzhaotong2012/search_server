@@ -277,6 +277,7 @@ int main(){
 		int checkFlag = 1;
 		char seg[] = "&";
 		char *p;
+		printf("PATH [%s] \n",path);
 		p = strchr(path,'&');
 		if( !p || !*p){
 			checkFlag = -9;			
