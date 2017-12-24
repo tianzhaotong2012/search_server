@@ -20,7 +20,7 @@
 
 #define PORT 9003
 #define QUEUE_MAX_COUNT 5
-#define BUFF_SIZE 1024
+#define BUFF_SIZE 4096
 
 #define SERVER_STRING "Server: searchhttpd/0.1.0\r\n"
 
@@ -261,15 +261,12 @@ int main(){
 		
 		size_t buflen = 0;
 		hello_len = recv(client_fd, recv_buf + buflen , BUFF_SIZE - buflen,0);
-		char get_data[102];
-		strncpy(get_data, recv_buf, 100);
 
-		char buf[4096];
 		const char *method, *path;
 		int pret, minor_version;
 		struct phr_header  headers[100];
 		size_t  prevbuflen = 0, method_len, path_len, num_headers;
-		ssize_t rret;
+
 		/* parse the request */
 		buflen += hello_len;
 		num_headers = sizeof(headers) / sizeof(headers[0]);
