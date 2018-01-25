@@ -62,7 +62,7 @@ struct search_item * init_search_data(int * siaCount,char * md5_str){
 			continue;
 		}
 		memset(sia[LineNum].post_id,0,20);
-             	strncpy(sia[LineNum].post_id,line,6);	        	
+             	strncpy(sia[LineNum].post_id,line,ptr-line);	        	
 		memset(sia[LineNum].title,0,250);
             	strncpy(sia[LineNum].title,ptr+1,250);
 		//strcpy(sia[LineNum].title,ptr+1);
